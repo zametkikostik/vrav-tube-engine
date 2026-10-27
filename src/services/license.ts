@@ -172,3 +172,31 @@ export async function fetchPlans() {
     return null
   }
 }
+
+/** YooKassa checkout (RUB) — Russia & CIS */
+export async function startYookassaCheckout(email: string, planId: 'pro' | 'agency') {
+  const r = await fetch(`${API_BASE}/api/yookassa/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      planId,
+      successUrl: window.location.origin + '/?paid=1&provider=yookassa',
+      cancelUrl: window.location.origin + '/?canceled=1',
+    }),
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.error || 'YooKassa checkout failed')
+  if (data.url) window.location.href = data.url
+  return data
+}
+
+export async function fetchYookassaPlans() {
+  try {
+    const res = await fetch(`${API_BASE}/api/yookassa/prices`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
