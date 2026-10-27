@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neon-purple: #a855f7;
+  --color-neon-blue: #3b82f6;
+  --color-neon-red: #ef4444;
+  --color-neon-cyan: #22d3ee;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #0a0a12;
+  color: #f3f4f6;
+}
+
+.glass {
+  background: rgba(15, 15, 25, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+:root {
+  --brand-primary: #a855f7;
+  --brand-accent: #3b82f6;
+  --brand-yt: #ff0000;
+}
+
+.risk-green { background: linear-gradient(90deg, #10b981, #34d399); }
+.risk-yellow { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.risk-red { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f0f1a; }
+::-webkit-scrollbar-thumb { background: #4c1d95; border-radius: 3px; }
+
+.btn-brand {
+  background: linear-gradient(to right, var(--brand-primary), var(--brand-accent));
+}
+
+.text-brand {
+  color: var(--brand-primary);
+}
+
+.border-brand {
+  border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent);
+}
+
+.glow-brand {
+  box-shadow: 0 0 24px color-mix(in srgb, var(--brand-primary) 35%, transparent);
+}
