@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build
+dist/
+build/
+src-tauri/target/
+android/
+*.apk
+*.aab
+*.exe
+*.msi
+*.AppImage
+*.deb
+*.dmg
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+npm-debug.log*
+
+# Local data
+*.sqlite
+*.db
+coverage/
+.cache/
