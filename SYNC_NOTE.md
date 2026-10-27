@@ -1,23 +1,10 @@
-# Sync note
+# Sync complete
 
-Most of the project is on GitHub.
-
-**Still need a local `git push` for large files:**
-
-- `src/App.tsx` (~37 KB)
-- `server/src/routes/audit.ts` (~9 KB)
-
-From project folder:
+Core product sources are on `main`.
 
 ```bash
-cd /path/to/vrav-tube-engine
-git add src/App.tsx server/src/routes/audit.ts
-git commit -m "feat: App UI and audit route"
-git push origin main
-```
-
-Or force-push the full local commit:
-
-```bash
-git push -u origin main --force
+git clone https://github.com/zametkikostik/vrav-tube-engine.git
+cd vrav-tube-engine
+npm install && npm run dev
+cd server && npm install && npm run dev
 ```
