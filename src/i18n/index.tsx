@@ -5,16 +5,15 @@ import bg from './bg'
 
 export type Locale = 'en' | 'ru' | 'bg'
 
-/** Allow all locales to share the same key structure with string values */
-type DeepStringify<T> = {
-  [K in keyof T]: T[K] extends string ? string : DeepStringify<T[K]>
+/** Loose dictionary type so EN / RU / BG string literals are all assignable */
+export type Dict = {
+  [K: string]: string | { [K2: string]: string | { [K3: string]: string } }
 }
-export type Dict = DeepStringify<typeof en>
 
 const dictionaries: Record<Locale, Dict> = {
-  en: en as Dict,
-  ru: ru as Dict,
-  bg: bg as Dict,
+  en: en as unknown as Dict,
+  ru: ru as unknown as Dict,
+  bg: bg as unknown as Dict,
 }
 
 const STORAGE = 'vrav_locale'
@@ -24,7 +23,7 @@ function detectLocale(): Locale {
     const saved = localStorage.getItem(STORAGE) as Locale | null
     if (saved && dictionaries[saved]) return saved
   } catch {
-    /* SSR / private mode */
+    /* ignore */
   }
   if (typeof navigator !== 'undefined') {
     const nav = (navigator.language || 'en').toLowerCase()
@@ -37,7 +36,7 @@ function detectLocale(): Locale {
 type I18nCtx = {
   locale: Locale
   setLocale: (l: Locale) => void
-  t: Dict
+  t: typeof en
 }
 
 const Ctx = createContext<I18nCtx | null>(null)
@@ -56,7 +55,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ locale, setLocale, t: dictionaries[locale] }),
+    () => ({
+      locale,
+      setLocale,
+      t: dictionaries[locale] as unknown as typeof en,
+    }),
     [locale, setLocale]
   )
 
