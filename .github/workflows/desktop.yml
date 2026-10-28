@@ -51,12 +51,13 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
 
-      - name: Generate icons (required by tauri build)
+      - name: Generate icons (png + ico + icns)
         run: |
           python -m pip install Pillow -q
           python scripts/generate-icons.py
           test -f src-tauri/icons/32x32.png
           test -f src-tauri/icons/icon.ico
+          test -f src-tauri/icons/icon.icns
           test -f src-tauri/icons/icon.png
           ls -la src-tauri/icons/
 
@@ -107,13 +108,14 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
 
-      - name: Generate icons (required by tauri-build on Windows)
+      - name: Generate icons (png + ico + icns)
         shell: bash
         run: |
           python -m pip install Pillow -q
           python scripts/generate-icons.py
           test -f src-tauri/icons/32x32.png
           test -f src-tauri/icons/icon.ico
+          test -f src-tauri/icons/icon.icns
           ls -la src-tauri/icons/
 
       - name: Sync version
