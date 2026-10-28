@@ -1,0 +1,131 @@
+name: Release assets
+
+# Puts built files onto the GitHub Release page for tags like v0.1.0 or v.0.1
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to attach assets to (e.g. v.0.1)'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install
+      - run: npm run build
+      - name: Pack web dist
+        run: |
+          cd dist && zip -r ../vrav-web-dist.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-web
+          path: vrav-web-dist.zip
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: System deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libwebkit2gtk-4.0-dev build-essential \
+            curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf python3-pil
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm install -D @tauri-apps/cli@2
+      - name: Icons
+        run: |
+          python3 scripts/generate-icons.py || true
+          npx tauri icon src-tauri/icons/icon.png || true
+      - run: node scripts/sync-version.mjs || true
+      - run: npm run tauri build
+        env:
+          CI: true
+      - name: Collect Linux packages
+        run: |
+          mkdir -p out
+          cp -v src-tauri/target/release/bundle/appimage/*.AppImage out/ 2>/dev/null || true
+          cp -v src-tauri/target/release/bundle/deb/*.deb out/ 2>/dev/null || true
+          ls -la out || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: out/*
+          if-no-files-found: warn
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - run: npm install -D @tauri-apps/cli@2
+      - name: Icons
+        shell: bash
+        run: |
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py || true
+          npx tauri icon src-tauri/icons/icon.png || true
+      - run: node scripts/sync-version.mjs || true
+      - run: npm run tauri build
+      - name: Collect Windows packages
+        shell: bash
+        run: |
+          mkdir -p out
+          cp -v src-tauri/target/release/bundle/msi/* out/ 2>/dev/null || true
+          cp -v src-tauri/target/release/bundle/nsis/* out/ 2>/dev/null || true
+          ls -la out || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: out/*
+          if-no-files-found: warn
+
+  publish:
+    needs: [build-web, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List files
+        run: find artifacts -type f | sort
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            artifacts/**/*
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
