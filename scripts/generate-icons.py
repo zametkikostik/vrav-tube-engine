@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
-"""Generate Tauri icons under src-tauri/icons/ (PNG + ICO)."""
-from pathlib import Path
+"""Generate Tauri icons under src-tauri/icons/ (PNG + ICO + ICNS)."""
+from __future__ import annotations
+
+import io
+import struct
 import sys
+from pathlib import Path
 
 try:
     from PIL import Image, ImageDraw
 except ImportError:
     import subprocess
+
     subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow", "-q"])
     from PIL import Image, ImageDraw
 
@@ -35,6 +40,30 @@ def make_icon(size: int) -> Image.Image:
     return img
 
 
+def png_bytes(size: int) -> bytes:
+    buf = io.BytesIO()
+    make_icon(size).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def write_icns(path: Path) -> None:
+    icon_types = {
+        16: b"icp4",
+        32: b"icp5",
+        64: b"icp6",
+        128: b"ic07",
+        256: b"ic08",
+        512: b"ic09",
+    }
+    chunks: list[bytes] = []
+    for size, ostype in icon_types.items():
+        data = png_bytes(size)
+        length = 8 + len(data)
+        chunks.append(ostype + struct.pack(">I", length) + data)
+    body = b"".join(chunks)
+    path.write_bytes(b"icns" + struct.pack(">I", 8 + len(body)) + body)
+
+
 def main() -> None:
     master = make_icon(512)
     master.save(ICONS / "icon.png")
@@ -49,7 +78,10 @@ def main() -> None:
     imgs = [make_icon(s) for s in sizes]
     imgs[-1].save(ICONS / "icon.ico", format="ICO", sizes=[(s, s) for s in sizes])
 
-    for f in ["32x32.png", "128x128.png", "icon.png", "icon.ico"]:
+    write_icns(ICONS / "icon.icns")
+
+    required = ["32x32.png", "128x128.png", "icon.png", "icon.ico", "icon.icns"]
+    for f in required:
         p = ICONS / f
         if not p.exists() or p.stat().st_size < 50:
             raise SystemExit(f"failed to write {p}")
