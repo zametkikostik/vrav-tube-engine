@@ -22,6 +22,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install system deps (Tauri)
         run: |
           sudo apt-get update
@@ -29,14 +34,8 @@ jobs:
             libwebkit2gtk-4.1-dev \
             libwebkit2gtk-4.0-dev \
             build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf
+            curl wget file libxdo-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -52,12 +51,22 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
 
+      - name: Generate icons (required by tauri build)
+        run: |
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py
+          test -f src-tauri/icons/32x32.png
+          test -f src-tauri/icons/icon.ico
+          test -f src-tauri/icons/icon.png
+          ls -la src-tauri/icons/
+
       - name: Sync version
         run: node scripts/sync-version.mjs || true
 
       - name: Build Tauri (Linux)
         run: npm run tauri build
         env:
+          CI: true
           TAURI_SIGNING_PRIVATE_KEY: ''
 
       - name: Upload Linux artifacts
@@ -79,6 +88,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -93,6 +107,15 @@ jobs:
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
 
+      - name: Generate icons (required by tauri-build on Windows)
+        shell: bash
+        run: |
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py
+          test -f src-tauri/icons/32x32.png
+          test -f src-tauri/icons/icon.ico
+          ls -la src-tauri/icons/
+
       - name: Sync version
         run: node scripts/sync-version.mjs || true
 
@@ -103,5 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vrav-desktop-windows
-          path: src-tauri/target/release/bundle/msi/**
+          path: |
+            src-tauri/target/release/bundle/msi/**
+            src-tauri/target/release/bundle/nsis/**
           if-no-files-found: warn

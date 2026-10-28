@@ -1,6 +1,5 @@
 name: Release assets
 
-# Puts built files onto the GitHub Release page for tags like v0.1.0 or v.0.1
 on:
   push:
     tags:
@@ -8,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to attach assets to (e.g. v.0.1)'
+        description: 'Existing tag to attach assets to (e.g. v0.1.1)'
         required: true
 
 permissions:
@@ -28,8 +27,7 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Pack web dist
-        run: |
-          cd dist && zip -r ../vrav-web-dist.zip .
+        run: cd dist && zip -r ../vrav-web-dist.zip .
       - uses: actions/upload-artifact@v4
         with:
           name: release-web
@@ -49,14 +47,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libwebkit2gtk-4.0-dev build-essential \
-            curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf python3-pil
+            curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install
       - run: npm install -D @tauri-apps/cli@2
       - name: Icons
         run: |
-          python3 scripts/generate-icons.py || true
-          npx tauri icon src-tauri/icons/icon.png || true
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py
+          test -f src-tauri/icons/32x32.png
+          test -f src-tauri/icons/icon.ico
       - run: node scripts/sync-version.mjs || true
       - run: npm run tauri build
         env:
@@ -90,8 +90,8 @@ jobs:
         shell: bash
         run: |
           python -m pip install Pillow -q
-          python scripts/generate-icons.py || true
-          npx tauri icon src-tauri/icons/icon.png || true
+          python scripts/generate-icons.py
+          test -f src-tauri/icons/icon.ico
       - run: node scripts/sync-version.mjs || true
       - run: npm run tauri build
       - name: Collect Windows packages
@@ -115,10 +115,8 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-
       - name: List files
         run: find artifacts -type f | sort
-
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
