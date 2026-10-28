@@ -22,6 +22,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python (icons)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install system deps (Tauri)
         run: |
           sudo apt-get update
@@ -36,7 +41,16 @@ jobs:
             libssl-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
-            patchelf
+            patchelf \
+            python3-pil
+
+      - name: Generate Tauri icons
+        run: |
+          python3 scripts/generate-icons.py
+          # Official generator from source PNG (full icon set)
+          npm install -D @tauri-apps/cli@2
+          npx tauri icon src-tauri/icons/icon.png || true
+          ls -la src-tauri/icons/
 
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -79,6 +93,20 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Setup Python (icons)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate Tauri icons
+        shell: bash
+        run: |
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py
+          npm install -D @tauri-apps/cli@2
+          npx tauri icon src-tauri/icons/icon.png || true
+          ls -la src-tauri/icons/
+
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -103,5 +131,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vrav-desktop-windows
-          path: src-tauri/target/release/bundle/msi/**
+          path: |
+            src-tauri/target/release/bundle/msi/**
+            src-tauri/target/release/bundle/nsis/**
           if-no-files-found: warn
