@@ -44,14 +44,6 @@ jobs:
             patchelf \
             python3-pil
 
-      - name: Generate Tauri icons
-        run: |
-          python3 scripts/generate-icons.py
-          # Official generator from source PNG (full icon set)
-          npm install -D @tauri-apps/cli@2
-          npx tauri icon src-tauri/icons/icon.png || true
-          ls -la src-tauri/icons/
-
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -65,6 +57,14 @@ jobs:
 
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
+
+      - name: Generate Tauri icons
+        run: |
+          python3 scripts/generate-icons.py
+          npx tauri icon src-tauri/icons/icon.png
+          ls -la src-tauri/icons/
+          test -f src-tauri/icons/32x32.png
+          test -f src-tauri/icons/icon.ico
 
       - name: Sync version
         run: node scripts/sync-version.mjs || true
@@ -98,15 +98,6 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Generate Tauri icons
-        shell: bash
-        run: |
-          python -m pip install Pillow -q
-          python scripts/generate-icons.py
-          npm install -D @tauri-apps/cli@2
-          npx tauri icon src-tauri/icons/icon.png || true
-          ls -la src-tauri/icons/
-
       - name: Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -120,6 +111,16 @@ jobs:
 
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
+
+      - name: Generate Tauri icons
+        shell: bash
+        run: |
+          python -m pip install Pillow -q
+          python scripts/generate-icons.py
+          npx tauri icon src-tauri/icons/icon.png
+          ls -la src-tauri/icons/
+          test -f src-tauri/icons/32x32.png
+          test -f src-tauri/icons/icon.ico
 
       - name: Sync version
         run: node scripts/sync-version.mjs || true
